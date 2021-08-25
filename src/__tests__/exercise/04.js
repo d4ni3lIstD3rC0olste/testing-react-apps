@@ -5,36 +5,33 @@ import * as React from 'react'
 import {render, screen} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Login from '../../components/login'
+import faker from 'faker'
+import {build, fake} from '@jackfranklin/test-data-bot'
 
 test('submitting the form calls onSubmit with username and password', () => {
+  const userBuilder = build({
+    fields: {
+      username: fake(faker => faker.internet.userName()),
+      password: fake(faker => faker.internet.password()),
+    },
+  });
   // 🐨 create a variable called "submittedData" and a handleSubmit function that
-  let submittedData = '';
-  const handleSubmit = (data) => submittedData = data;
+  const handleSubmit = jest.fn();
   // accepts the data and assigns submittedData to the data that was submitted
   
   render(<Login onSubmit={handleSubmit} />)
-  const username = screen.getByLabelText('Username')
-  const password = screen.getByLabelText('Password')
-  userEvent.type(username, 'user')
-  userEvent.type(password, 'verysecure')
+  const usernameInput = screen.getByLabelText('Username')
+  const passwordInput = screen.getByLabelText('Password')
+  const {username, password} = userBuilder({password: 'abc'})
+  userEvent.type(usernameInput, username)
+  userEvent.type(passwordInput, password)
   const submitButton = screen.getByRole('button', {name: /submit/i})
   userEvent.click(submitButton)
 
-  expect(submittedData).toEqual({
-    username: 'user',
-    password: 'verysecure',
+  expect(handleSubmit).toHaveBeenCalledWith({
+    username: username,
+    password: password,
   })
-
-  // 🐨 render the login with your handleSubmit function as the onSubmit prop
-  //
-  // 🐨 get the username and password fields via `getByLabelText`
-  // 🐨 use userEvent.type to change the username and password fields to
-  //    whatever you want
-  //
-  // 🐨 click on the button with the text "Submit"
-  //
-  // assert that submittedData is correct
-  // 💰 use `toEqual` from Jest: 📜 https://jestjs.io/docs/en/expect#toequalvalue
 })
 
 /*
