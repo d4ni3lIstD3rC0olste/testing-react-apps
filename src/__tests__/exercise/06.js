@@ -5,7 +5,6 @@ import * as React from 'react'
 import {render, screen, act} from '@testing-library/react'
 import Location from '../../examples/location'
 import {useCurrentPosition} from 'react-use-geolocation'
-import { fake } from '@jackfranklin/test-data-bot'
 
 jest.mock('react-use-geolocation')
 
@@ -46,6 +45,30 @@ test('displays the users current location', async () => {
   // 🐨 verify the latitude and longitude appear correctly
   expect(screen.getByText(/latitude/i)).toHaveTextContent(`Latitude: ${fakePosition.coords.latitude}`)
   expect(screen.getByText(/longitude/i)).toHaveTextContent(`Longitude: ${fakePosition.coords.longitude}`)
+})
+
+test('error case', () => {
+  const error = {
+    message: 'kaputt gegangen',
+  }
+
+  let setCurrentPosition
+  useCurrentPosition.mockImplementation(() => {
+    const [state, setState] = React.useState([]);
+    setCurrentPosition = setState;
+    return state;
+  })
+
+  render(<Location />)
+  
+  const spinner = screen.getByLabelText(/loading/i)
+  expect(spinner).toBeInTheDocument()
+
+  act(() => {
+    setCurrentPosition([{}, error])
+  })
+
+  expect(screen.getByRole('alert')).toHaveTextContent(error.message)
 })
 
 /*
