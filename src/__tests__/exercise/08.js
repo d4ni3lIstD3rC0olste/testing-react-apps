@@ -2,7 +2,7 @@
 // http://localhost:3000/counter-hook
 
 import * as React from 'react'
-import {render, screen} from '@testing-library/react'
+import {render, screen, act} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import useCounter from '../../components/use-counter'
 
@@ -11,32 +11,58 @@ import useCounter from '../../components/use-counter'
 // capabilities of this hook
 // 💰 here's how to use the hook:
 // const {count, increment, decrement} = useCounter()
-function MyTestComponent() {
-  const {count, increment, decrement} = useCounter()
+const results = {}
+function TestComponent(props = {}) {
+  Object.assign(results, useCounter(props))
+  return null
+}
 
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={increment}>Increment</button>
-      <button onClick={decrement}>Decrement</button>
-    </div>
-  );
+const setup = (props) => {
+  render(<TestComponent {...props}/>)
 }
 
 test('exposes the count and increment/decrement functions', () => {
-  render(<MyTestComponent />)
+  setup()
+
+  expect(results.count).toBe(0)
+
+  act(() => {
+    results.increment()
+  })
+
+  expect(results.count).toBe(1)
+
+  act(() => {
+    results.decrement()
+  })
   
-  const countDisplay = screen.getByText(/count/i)
-  const incrementButton = screen.getByText(/increment/i)
-  const decrementButton = screen.getByText(/decrement/i)
-
-  expect(countDisplay).toHaveTextContent(`Count: ${0}`)
-
-  userEvent.click(incrementButton)
-  expect(countDisplay).toHaveTextContent(`Count: ${1}`)
-
-  userEvent.click(decrementButton)
-  expect(countDisplay).toHaveTextContent(`Count: ${0}`)
+  expect(results.count).toBe(0)
 })
 
+test('allows customization of the initial count', () => {
+  setup({initialCount: 2})
+
+  expect(results.count).toBe(2)
+})
+
+test('allows customization of the step', () => {
+  setup({
+    initialCount: 2, 
+    step: 2,
+  })
+
+  expect(results.count).toBe(2)
+
+  act(() => {
+    results.increment()
+  })
+
+  expect(results.count).toBe(4)
+
+  act(() => {
+    results.decrement()
+  })
+  
+  expect(results.count).toBe(2)
+})
 /* eslint no-unused-vars:0 */
